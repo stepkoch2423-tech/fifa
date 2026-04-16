@@ -5,7 +5,9 @@ import {
   formatMatchDate,
   getClubInitials,
 } from "../utils/football";
+import { useOverlayTransition } from "../hooks/useOverlayTransition";
 import { getOptimizedPlayerImageUrl } from "../utils/playerHelpers";
+import { LoadingOverlay } from "./LoadingOverlay";
 import { PlayerModal } from "./PlayerModal";
 
 interface DashboardViewProps {
@@ -32,6 +34,7 @@ export function DashboardView({
   stats,
 }: DashboardViewProps) {
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const { overlay, runWithOverlay } = useOverlayTransition("Открываем карточку игрока");
 
   const clubMap = useMemo(
     () => new Map(clubs.map((club) => [club.id, club])),
@@ -161,12 +164,13 @@ export function DashboardView({
               <div className="absolute inset-0 rounded-[42px] bg-[radial-gradient(circle,rgba(250,204,21,0.18),transparent_60%)] blur-3xl" />
               <div className="absolute -inset-6 rounded-[46px] border border-white/8 bg-white/[0.02] backdrop-blur-sm" />
               <img
-                src="/football-cards-logo.png"
+                src="/football-cards-logo-optimized.jpg"
                 alt="Football Cards logo"
-                width={768}
-                height={768}
+                width={600}
+                height={600}
                 loading="eager"
                 decoding="async"
+                fetchPriority="high"
                 className="relative z-10 mx-auto w-full drop-shadow-[0_30px_90px_rgba(0,0,0,0.6)]"
               />
             </div>
@@ -188,7 +192,7 @@ export function DashboardView({
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+            <div className="featured-player-grid mt-5">
               {featuredPlayers.map((player) => {
                 const club = clubMap.get(player.clubId);
 
@@ -196,7 +200,11 @@ export function DashboardView({
                   <button
                     key={player.id}
                     type="button"
-                    onClick={() => startTransition(() => setActivePlayerId(player.id))}
+                    onClick={() =>
+                      runWithOverlay(() =>
+                        startTransition(() => setActivePlayerId(player.id)),
+                      )
+                    }
                     className="group overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(12,18,34,0.9)_0%,rgba(7,11,24,0.96)_100%)] text-left transition-all duration-200 hover:-translate-y-1 hover:border-amber-300/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   >
                     <div className="relative h-64 overflow-hidden">
@@ -207,7 +215,7 @@ export function DashboardView({
                         height={560}
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.04]"
+                        className="player-photo-focus h-full w-full transition-transform duration-300 group-hover:scale-[1.04]"
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.04)_0%,rgba(2,6,23,0.88)_100%)]" />
                       <div className="absolute left-4 top-4 rounded-full bg-amber-300 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-slate-950">
@@ -394,6 +402,7 @@ export function DashboardView({
         club={activeClub}
         onClose={() => setActivePlayerId(null)}
       />
+      <LoadingOverlay active={overlay.visible} label={overlay.label} />
     </div>
   );
 }

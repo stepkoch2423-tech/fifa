@@ -1,8 +1,10 @@
 import { startTransition, useMemo, useState } from "react";
 import type { Club, Player } from "../types/football";
+import { useOverlayTransition } from "../hooks/useOverlayTransition";
 import { cn } from "../utils/cn";
 import { getClubInitials } from "../utils/football";
 import { getOptimizedPlayerImageUrl } from "../utils/playerHelpers";
+import { LoadingOverlay } from "./LoadingOverlay";
 import { PlayerModal } from "./PlayerModal";
 
 interface ClubsViewProps {
@@ -41,6 +43,7 @@ function RatingBar({
 export function ClubsView({ clubs, players }: ClubsViewProps) {
   const [selectedClubId, setSelectedClubId] = useState<string>(clubs[0]?.id ?? "");
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const { overlay, runWithOverlay } = useOverlayTransition("Открываем карточку игрока");
 
   const selectedClub = useMemo(
     () => clubs.find((club) => club.id === selectedClubId) ?? clubs[0] ?? null,
@@ -251,11 +254,15 @@ export function ClubsView({ clubs, players }: ClubsViewProps) {
                     <button
                       key={player.id}
                       type="button"
-                      onClick={() => startTransition(() => setActivePlayerId(player.id))}
+                      onClick={() =>
+                        runWithOverlay(() =>
+                          startTransition(() => setActivePlayerId(player.id)),
+                        )
+                      }
                       className="content-auto-card overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.03] text-left transition-transform duration-200 hover:-translate-y-1 hover:border-white/18 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                     >
                       <div className="flex gap-3 p-3">
-                        <div className="h-24 w-20 shrink-0 overflow-hidden rounded-[18px] border border-white/10 bg-slate-950/70">
+                        <div className="h-28 w-[84px] shrink-0 overflow-hidden rounded-[18px] border border-white/10 bg-slate-950/70">
                           <img
                             src={getOptimizedPlayerImageUrl(player.photoUrl, "card")}
                             alt={`Портрет ${player.name}`}
@@ -263,7 +270,7 @@ export function ClubsView({ clubs, players }: ClubsViewProps) {
                             height={240}
                             loading="lazy"
                             decoding="async"
-                            className="h-full w-full object-cover object-top"
+                            className="player-photo-focus h-full w-full"
                           />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -325,7 +332,9 @@ export function ClubsView({ clubs, players }: ClubsViewProps) {
                             <button
                               type="button"
                               onClick={() =>
-                                startTransition(() => setActivePlayerId(player.id))
+                                runWithOverlay(() =>
+                                  startTransition(() => setActivePlayerId(player.id)),
+                                )
                               }
                               className="flex items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
                             >
@@ -337,7 +346,7 @@ export function ClubsView({ clubs, players }: ClubsViewProps) {
                                   height={128}
                                   loading="lazy"
                                   decoding="async"
-                                  className="h-full w-full object-cover object-top"
+                                  className="player-photo-focus h-full w-full"
                                 />
                               </div>
                               <div className="min-w-0">
@@ -381,6 +390,7 @@ export function ClubsView({ clubs, players }: ClubsViewProps) {
         club={activeClub}
         onClose={() => setActivePlayerId(null)}
       />
+      <LoadingOverlay active={overlay.visible} label={overlay.label} />
     </div>
   );
 }

@@ -37,6 +37,16 @@ export function getOptimizedPlayerImageUrl(
 ) {
   if (url.startsWith("data:")) return url;
 
+  if (url.startsWith("/player-photos-optimized/")) {
+    return url;
+  }
+
+  if (url.startsWith("/player-photos/")) {
+    return url
+      .replace("/player-photos/", "/player-photos-optimized/")
+      .replace(/\.[^.]+$/, ".jpg");
+  }
+
   const width = IMAGE_WIDTHS[variant];
   if (url.includes("upload.wikimedia.org") && /\/\d+px-/.test(url)) {
     return url.replace(/\/\d+px-/, `/${width}px-`);

@@ -1,5 +1,6 @@
 import { startTransition, useMemo, useState } from "react";
 import type { Club, Match, Player } from "../types/football";
+import { useOverlayTransition } from "../hooks/useOverlayTransition";
 import { cn } from "../utils/cn";
 import {
   formatLongMatchDate,
@@ -8,6 +9,7 @@ import {
 } from "../utils/football";
 import { getOptimizedPlayerImageUrl } from "../utils/playerHelpers";
 import { BettingPanel } from "./BettingPanel";
+import { LoadingOverlay } from "./LoadingOverlay";
 import { PlayerModal } from "./PlayerModal";
 
 interface MatchesViewProps {
@@ -60,6 +62,7 @@ export function MatchesView({
   onSelectMatch,
 }: MatchesViewProps) {
   const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const { overlay, runWithOverlay } = useOverlayTransition("Загружаем матч");
 
   const clubMap = useMemo(
     () => new Map(clubs.map((club) => [club.id, club])),
@@ -130,7 +133,11 @@ export function MatchesView({
               >
                 <button
                   type="button"
-                  onClick={() => startTransition(() => onSelectMatch(match.id))}
+                  onClick={() =>
+                    runWithOverlay(() =>
+                      startTransition(() => onSelectMatch(match.id)),
+                    )
+                  }
                   className="w-full text-left focus-visible:outline-none"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -186,7 +193,11 @@ export function MatchesView({
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => startTransition(() => onSelectMatch(match.id))}
+                    onClick={() =>
+                      runWithOverlay(() =>
+                        startTransition(() => onSelectMatch(match.id)),
+                      )
+                    }
                     className="rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   >
                     Открыть детали
@@ -317,8 +328,11 @@ export function MatchesView({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    startTransition(() =>
-                                      setActivePlayerId(entry.playerId),
+                                    runWithOverlay(() =>
+                                      startTransition(() =>
+                                        setActivePlayerId(entry.playerId),
+                                      ),
+                                      "Открываем карточку игрока",
                                     )
                                   }
                                   className="flex w-full items-center justify-between gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300"
@@ -336,7 +350,7 @@ export function MatchesView({
                                           height={96}
                                           loading="lazy"
                                           decoding="async"
-                                          className="h-full w-full object-cover object-top"
+                                          className="player-photo-focus h-full w-full"
                                         />
                                       ) : null}
                                     </span>
@@ -371,6 +385,7 @@ export function MatchesView({
         club={activeClub}
         onClose={() => setActivePlayerId(null)}
       />
+      <LoadingOverlay active={overlay.visible} label={overlay.label} />
     </div>
   );
 }

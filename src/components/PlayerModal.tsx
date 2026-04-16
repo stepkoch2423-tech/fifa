@@ -106,7 +106,7 @@ export function PlayerModal({ player, club, onClose }: PlayerModalProps) {
                 height={820}
                 decoding="async"
                 fetchPriority="high"
-                className="h-full w-full object-cover object-top"
+                className="player-photo-focus h-full w-full"
               />
             </div>
 
